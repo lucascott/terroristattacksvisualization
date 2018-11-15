@@ -1,0 +1,2 @@
+"iyear","imonth", "iday", "extended","country_txt", "region_txt", "provstate", "latitude", "longitude #out", #crits, "multiple", "success", "suicide", "attacktype1_txt", "targtype1_txt", "natlty1_txt", "gname", "guncertain1", "nperps", "nperpcap", "weaptype1_txt", "nkill", "nkillter","nwound", "property", "ishostkid", "ransom", "INT_LOG", "INT_IDEO", "INT_MISC", "scite1","scite2", "scite3"
+
