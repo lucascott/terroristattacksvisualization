@@ -3,3 +3,8 @@
 https://sarthakdasadia.shinyapps.io/GlobalTerrorism/
 
 https://github.com/Maddev25/DDP_CourseProject/
+
+
+addCircles(radius = ~(log(nkill)^7.1)+1000, weight = 1, color = "#777777",
+                 fillOpacity = 0.7, popup = ~paste(nkill)
+      )
