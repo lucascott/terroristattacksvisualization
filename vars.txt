@@ -9,12 +9,36 @@ addCircles(radius = ~(log(nkill)^7.1)+1000, weight = 1, color = "#777777",
                  fillOpacity = 0.7, popup = ~paste(nkill)
       )
 
+0.- Two different type of analysis:
+    0.1.- Analisys of the overall terrorism attacks
+          - Cheese graphs showing most affected countries/regions by fatalities, number of attacks, most common motivation attacks.
+          - Visualizing overall information for terrorist groups.
+          
+          MAP:
+              - Coloring countries and info. with respect to number of attacks and fatalities.
+              - Representing total groups activity.
+              - Possibility to focus in specfific region visualizing extra info (clusters of attacks, etc...)
+          
+    0.2.- Analysis of the terrorism with respect to the year
+    
+          MAP:
+              - Year slider popping up the attacks in each year (size: fatalities, color:terrorist group (perhaps for the first attack  of a terrorist group show the name and logo)). 
+              - Perhaps implement two controlers in the bar to be able to show info in the map of a span of year (e.g.: 5 years slider).
+              - Click on the attack for extra info., fatalities, economic impact, location.
+              - Click on a country for info of attacks in the selected span of time (number of attacks, groups active in that country, number of fatalities)
+        
+          
+          TIME-SERIES GRAPHS:
+              - One single time serie graph changing info with checkboxes selector.
+              - Time-serie graph of number of attacks
+              - Time-serie graph of number of fatalities
+              - Time-serie graph of number of group activity
 1.- Geographical distribution of attacks with year slider, size of bubbles representing number of victims. Also group of terrorist (color), kidnap.
 
 2.- Interactive map through checkboxes, focusing on specific regions.
 3.- Time of the year and day of the week vs region and size.
 4.- Kind and kind of weapon vs terrorist group and region.  
-5.- Interactive clicking showing extra information about group, region, etc (filtering attributes…).
+5.- Interactive clicking showing extra information about group, region, etc (filtering attributesâ€¦).
 6.- Icon and images representing values of variables (++ visualization).
 7.- Nationality of terrorists, victims and country.
 8.- Increasing size countries regarding quantitative variables or appearances of categorical variables.
