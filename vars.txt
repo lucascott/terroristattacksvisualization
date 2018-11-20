@@ -8,3 +8,14 @@ https://github.com/Maddev25/DDP_CourseProject/
 addCircles(radius = ~(log(nkill)^7.1)+1000, weight = 1, color = "#777777",
                  fillOpacity = 0.7, popup = ~paste(nkill)
       )
+
+1.- Geographical distribution of attacks with year slider, size of bubbles representing number of victims. Also group of terrorist (color), kidnap.
+
+2.- Interactive map through checkboxes, focusing on specific regions.
+3.- Time of the year and day of the week vs region and size.
+4.- Kind and kind of weapon vs terrorist group and region.  
+5.- Interactive clicking showing extra information about group, region, etc (filtering attributes…).
+6.- Icon and images representing values of variables (++ visualization).
+7.- Nationality of terrorists, victims and country.
+8.- Increasing size countries regarding quantitative variables or appearances of categorical variables.
+9.- Textbox filtering keywords with attacks.
