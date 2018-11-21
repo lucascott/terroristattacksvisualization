@@ -1,6 +1,7 @@
 library(shiny)
 library(shinydashboard)
 library(leaflet)
+library(plotly)
 
 
 
@@ -29,13 +30,28 @@ dashboardPage(skin = "yellow",
               min = 0,
               max = max(data1$nkill,na.rm = T),
               value = 0
-              )
-            ),
+            )
+          ),
           fluidRow(
             #plotlyOutput("plot1",height='auto', width = 'auto')),
-            leafletOutput("map")
+            box(
+              title = "Map of the attacks:", status = "primary", solidHeader = TRUE,
+              width = 8,
+              collapsible = T,
+              leafletOutput("map", width = "100%")
+              
+            ),
+            box(title = "Attack types:", status = "primary",  solidHeader = TRUE,
+                width = 4,
+                collapsible = T,
+                plotlyOutput("attType", width = "100%", height = 200)
+            ),
+            box(title = "Attack countries:", status = "primary",  solidHeader = TRUE,
+                width = 4,
+                collapsible = T,
+                plotlyOutput("attCoutries", width = "100%", height = 200)
             )
-
+          )
         )
       ),
       tabItem(tabName = "globalattack2",
