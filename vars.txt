@@ -1,13 +1,12 @@
 "iyear","imonth", "iday", "extended","country_txt", "region_txt", "provstate", "latitude", "longitude #out", #crits, "multiple", "success", "suicide", "attacktype1_txt", "targtype1_txt", "natlty1_txt", "gname", "guncertain1", "nperps", "nperpcap", "weaptype1_txt", "nkill", "nkillter","nwound", "property", "ishostkid", "ransom", "INT_LOG", "INT_IDEO", "INT_MISC", "scite1","scite2", "scite3"
 
+Same project as ours:
 https://sarthakdasadia.shinyapps.io/GlobalTerrorism/
 
 https://github.com/Maddev25/DDP_CourseProject/
 
-
-addCircles(radius = ~(log(nkill)^7.1)+1000, weight = 1, color = "#777777",
-                 fillOpacity = 0.7, popup = ~paste(nkill)
-      )
+For the markers:
+https://rstudio.github.io/leaflet/markers.html
 
 0.- Two different type of analysis:
     0.1.- Analisys of the overall terrorism attacks
