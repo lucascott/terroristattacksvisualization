@@ -1,0 +1,11 @@
+.box-header{
+	min-height: 40px;
+}
+
+#filters .box-header{
+	text-align: center;
+}
+
+.text-small{
+	font-size: 75%;
+}
