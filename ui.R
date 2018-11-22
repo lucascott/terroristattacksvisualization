@@ -23,8 +23,8 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
         fluidPage(
           fluidRow(
             column(width = 12,
-             valueBoxOutput("totCountry", width = 3),
              valueBoxOutput("totAttacks", width = 3),
+             valueBoxOutput("totSuccess", width = 3),
              valueBoxOutput("totDeaths", width = 3),
              valueBoxOutput("totRansom", width = 3))),
           fluidRow(id = "filters",

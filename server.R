@@ -36,8 +36,6 @@ data1$region = as.character(data1$region)
 
 shinyServer(function(input, output, session){
   # OVERVIEW
-  
-  
   filteredData <- reactive({
     d = data1 %>% filter(nkill >= input$nkills[1] & nkill <= input$nkills[2])
     if(input$selRegion != "All"){
@@ -85,12 +83,15 @@ shinyServer(function(input, output, session){
   
   
   
-  output$totDeaths <- renderValueBox({
-    deaths <- sum(filteredData()$nkill, na.rm = T)
-    valueBox(deaths,"Total Fatalities",icon = icon("user"), color = 'blue') })
   output$totAttacks <- renderValueBox({
     attacks <- nrow(filteredData())
     valueBox(attacks,"Total Attacks",icon = icon("bomb"), color = 'red') })
+  output$totSuccess <- renderValueBox({
+    success <- sum(filteredData()$success, na.rm = T)
+    valueBox(success,"Total Successes",icon = icon("frown"), color = 'orange') })
+  output$totDeaths <- renderValueBox({
+    deaths <- sum(filteredData()$nkill, na.rm = T)
+    valueBox(deaths,"Total Fatalities",icon = icon("cross"), color = 'blue') })
   output$totRansom <- renderValueBox({
     ransom <- intToStr(sum(filteredData()$ransomamt, na.rm = T))
     valueBox(ransom,"Total Ransom in $",icon = icon("hand-holding-usd"), color = 'green') })
