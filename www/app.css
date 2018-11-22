@@ -17,8 +17,17 @@
 .small-box{
 	border-radius: 8px;
 }
+
 .footer{
 	background: #f4f4f4;
 	border-radius: 60px;
 	padding: 5px;
+}
+
+.sidebar {
+    color: #FFF;
+    position: fixed;
+    width: 220px;
+    white-space: nowrap;
+    overflow: visible;
 }
