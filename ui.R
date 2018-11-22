@@ -6,29 +6,41 @@ library(plotly)
 
 dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green”, “red”, “yellow”
   
-  dashboardHeader(title = "Global Terrorism Visulization"),
+  dashboardHeader(title = "RunAway"),
   
   dashboardSidebar(
     sidebarMenu(id = "sbm", 
-      menuItem("Data Overview", tabName = "globalattack1", icon = icon("area-chart")),
-      menuItem("Attacks per Country", tabName = "globalattack2", icon = icon("area-chart"))
+      menuItem("Introduction", tabName = "introduction", icon = icon("area-chart")),
+      menuItem("Attacks by Country", tabName = "globalattack1", icon = icon("area-chart"))
     )
   ),
   dashboardBody(
     tags$head(
-      tags$link(rel = "stylesheet", type = "text/css", href = "app.css")
+      tags$link(rel = "stylesheet", type = "text/css", href = "animate.css"),
+      tags$link(rel = "stylesheet", type = "text/css", href = "app.css"),
+      tags$script(src = "app.js")
     ),
     tabItems(
+      tabItem(tabName = "introduction",
+        fluidPage(
+          fluidRow(
+            box( width = 12,
+            htmlOutput("intro"))
+          )
+        )
+      ),
       tabItem(tabName = "globalattack1",
         fluidPage(
           fluidRow(
             column(width = 12,
-             valueBoxOutput("totAttacks", width = 3),
-             valueBoxOutput("totSuccess", width = 3),
-             valueBoxOutput("totDeaths", width = 3),
-             valueBoxOutput("totRansom", width = 3))),
+              valueBoxOutput("totAttacks", width = 3),
+              valueBoxOutput("totSuccess", width = 3),
+              valueBoxOutput("totDeaths", width = 3),
+              valueBoxOutput("totRansom", width = 3)
+            )
+          ),
           fluidRow(id = "filters",
-            box(title = HTML("<strong>Filters</strong> <i class='fa fa-filter text-small'></i>"),  width = 12, collapsible = T,
+            box(title = HTML("<b>Filters</b> <i class='fa fa-filter text-small'></i>"),  width = 12, collapsible = T,
               column(width = 6,
                 sliderInput("nkills",label = 
                   h4("Number of kills per attack:"),
@@ -74,18 +86,6 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
                 width = 12,
                 collapsible = T,
                 plotlyOutput("fatCountries", width = "100%")
-            )
-          )
-        )
-      ),
-      tabItem(tabName = "globalattack2",
-        fluidPage(
-          fluidRow(
-            column(width = 12,
-              selectInput("select", 
-                h3("Select box"), 
-                choices = list("Choice 1" = 1, "Choice 2" = 2, "Choice 3" = 3), selected = 1
-              )
             )
           )
         )

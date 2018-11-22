@@ -9,3 +9,16 @@
 .text-small{
 	font-size: 75%;
 }
+
+.modebar{
+	display: none !important;
+}
+
+.small-box{
+	border-radius: 8px;
+}
+.footer{
+	background: #f4f4f4;
+	border-radius: 60px;
+	padding: 5px;
+}

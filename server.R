@@ -3,6 +3,7 @@ library(leaflet)
 library(shinydashboard)
 library(dplyr)
 library(plotly)
+library(rmarkdown)
 
 #to remove the rows with null values in specific columns
 completeFun <- function(data, desiredCols) {
@@ -35,7 +36,7 @@ data1$country = as.character(data1$country)
 data1$region = as.character(data1$region)
 
 shinyServer(function(input, output, session){
-  # OVERVIEW
+  # ATTACKS BY COUNTRY
   filteredData <- reactive({
     d = data1 %>% filter(nkill >= input$nkills[1] & nkill <= input$nkills[2])
     if(input$selRegion != "All"){
@@ -55,9 +56,15 @@ shinyServer(function(input, output, session){
       
     )
   })
+  popUpCreate <- function(nkill, attack_type, date){
+    paste("<b>Kills:</b> ",nkill,"<br/><b>Type:</b> ", attack_type,"<br/><b>Date:</b> ", date)
+  }
   output$map <- renderLeaflet({
     leaflet(data = filteredData()) %>% addTiles() %>%
-      addMarkers(~longitude, ~latitude, icon = leafIcons())
+      addMarkers(~longitude, ~latitude,
+        icon = leafIcons(),
+        popup = ~popUpCreate(nkill, attack_type,date),
+        clusterOptions = markerClusterOptions(),)
     })
   
   observeEvent(input$nkills, {
@@ -65,7 +72,7 @@ shinyServer(function(input, output, session){
     clearShapes() %>%
     clearMarkers() %>%
     addMarkers(data = filteredData(),
-                     popup = ~paste("Kills: ",nkill),
+                     popup = ~popUpCreate(nkill, attack_type, date),
                      clusterOptions = markerClusterOptions(),
                      icon = leafIcons()
     )
@@ -75,7 +82,7 @@ shinyServer(function(input, output, session){
       clearShapes() %>%
       clearMarkers() %>%
       addMarkers(data = filteredData(),
-                 popup = ~paste("Kills: ",nkill),
+                 popup = ~popUpCreate(nkill, attack_type,date),
                  clusterOptions = markerClusterOptions(),
                  icon = leafIcons()
       )
@@ -130,5 +137,11 @@ shinyServer(function(input, output, session){
                                   width = 1.5))) %>%
       layout(xaxis = list(title = ""),
              yaxis = list(title = ""))
+  })
+  # INTRODUCTION
+  output$intro <- renderText({
+    #render("sample_rmarkdown.Rmd", output_file = "sample_rmarkdown.html")
+    readLines("index.html")
+    
   })
 })
