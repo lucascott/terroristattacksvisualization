@@ -18,7 +18,7 @@ myLevSim = function (str1, str2) {
   innerFunc = function(str1,str2){
     return(max(levenshteinSim(str1, str2)))
   }
-  d = lapply(strsplit(tolower(str1),"\\s+"), innerFunc, str2 = str2 )
+  d = lapply(strsplit(tolower(str1),"\\s+"), innerFunc, str2 = tolower(trimws(str2)) )
   return (d)
 }
 
@@ -47,6 +47,8 @@ intToStr <- function(num){
 # gtd$scite1 = str_replace_all(gtd$scite1, "[[:punct:]]", "")
 # gtd$scite1[gtd$scite1 == "\"\"" | gtd$scite1 == "\"" | gtd$scite1 == ""] <- NA
 # gtd  = completeFun(gtd, c("scite1", "scite2", "scite3"))
+# gtd$country_txt = as.character(gtd$country_txt)
+# gtd$gname = as.character(gtd$gname)
 
 #gtd$scite1 = tolower(gtd$scite1)
 #gtd$scite1 = as.character(gtd$scite1)
@@ -65,7 +67,6 @@ data1$region = as.character(data1$region)
 shinyServer(function(input, output, session){
   # INTRODUCTION
   output$intro <- renderText({
-    #render("sample_rmarkdown.Rmd", output_file = "sample_rmarkdown.html")
     readLines("index.html")
     
   })
@@ -170,8 +171,38 @@ shinyServer(function(input, output, session){
              yaxis = list(title = ""))
   })
   # SEARCH PAGE
+  output$totResults <- renderText({"This query might take few seconds..."})
+  searchData <- reactive({
+    gtd %>% filter(myLevSim(scite1, input$searchBox) > 0.8)
+  })
   observeEvent(input$searchBtn, {
-    d = gtd %>% filter(myLevSim(scite1, tolower(trimws(input$searchBox))) > 0.8)
-    output$searchTbl <- renderDataTable(d[c("country_txt","nkill","scite1")])
+    output$totResults <- renderText({paste("<h4>There are ",nrow(searchData())," results!</h4>")})
+    output$srcAttCoutries <- renderPlotly({
+      searchData() %>%
+        group_by(country_txt) %>%
+        summarize(count = n()) %>%
+        arrange(desc(count)) %>%
+        group_by(country_txt = ifelse(row_number() > 7, "Others", country_txt)) %>%
+        summarize(count = sum(count)) %>%
+        plot_ly(labels = ~country_txt, values = ~count) %>%
+        add_pie(hole = 0.6) %>%
+        layout(showlegend = F,
+               xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+               yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+    })
+    output$srcTerrOrg <- renderPlotly({
+      searchData() %>%
+        group_by(gname) %>%
+        summarize(count = n()) %>%
+        arrange(desc(count)) %>%
+        group_by(gname = ifelse(row_number() > 7, "Others", gname)) %>%
+        summarize(count = sum(count)) %>%
+        plot_ly(labels = ~gname, values = ~count) %>%
+        add_pie(hole = 0.6) %>%
+        layout(showlegend = F,
+               xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+               yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+    })
+    output$searchTbl <- renderDataTable(searchData()[c("country_txt","nkill","scite1")])
   })
 })

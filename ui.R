@@ -96,15 +96,29 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
           fluidRow(
             box( width = 12,
               column( width = 8,
-                textInput("searchBox", h2("Search for a word:"), placeholder = "e.g. Bomb")
+                textInput("searchBox", h2("Search for a word:"), placeholder = "e.g. Bomb"),
+                actionButton("searchBtn", "Search", width = "100%")
               ),
               column( width = 4,
-                actionButton("searchBtn", "Search", width = "100%")
+                htmlOutput("totResults")
               )
             )
           ),
           fluidRow(
-            box( width = 12,
+            box(title = "Attacks' countries:", status = "primary", 
+                width = 6,
+                collapsible = T, 
+                plotlyOutput("srcAttCoutries", width = "100%", height = 200)
+            ),
+            box(title = "Terrorist organizations:", status = "primary", 
+                width = 6,
+                collapsible = T, 
+                plotlyOutput("srcTerrOrg", width = "100%", height = 200)
+            )
+          ),
+          fluidRow(
+            box(title = "Results' table:", width = 12,
+              collapsible = T, collapsed = T,
               column( width = 12,
                 dataTableOutput('searchTbl')
               )
