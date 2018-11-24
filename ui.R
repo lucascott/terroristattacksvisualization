@@ -11,7 +11,8 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
   dashboardSidebar(
     sidebarMenu(id = "sbm", 
       menuItem("Introduction", tabName = "introduction", icon = icon("area-chart")),
-      menuItem("Attacks by Country", tabName = "globalattack1", icon = icon("area-chart"))
+      menuItem("Attacks by Country", tabName = "globalattack1", icon = icon("area-chart")),
+      menuItem("Word Search", tabName = "wordsearch", icon = icon("search"))
     )
   ),
   dashboardBody(
@@ -86,6 +87,27 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
                 width = 12,
                 collapsible = T,
                 plotlyOutput("fatCountries", width = "100%")
+            )
+          )
+        )
+      ),
+      tabItem(tabName = "wordsearch",
+        fluidPage(
+          fluidRow(
+            box( width = 12,
+              column( width = 8,
+                textInput("searchBox", h2("Search for a word:"), placeholder = "e.g. Bomb")
+              ),
+              column( width = 4,
+                actionButton("searchBtn", "Search", width = "100%")
+              )
+            )
+          ),
+          fluidRow(
+            box( width = 12,
+              column( width = 12,
+                dataTableOutput('searchTbl')
+              )
             )
           )
         )

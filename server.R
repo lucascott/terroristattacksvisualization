@@ -3,13 +3,25 @@ library(leaflet)
 library(shinydashboard)
 library(dplyr)
 library(plotly)
-library(rmarkdown)
+library(RecordLinkage)
+library(stringr)
 
 #to remove the rows with null values in specific columns
 completeFun <- function(data, desiredCols) {
   completeVec <- complete.cases(data[, desiredCols])
   return(data[completeVec, ])
 }
+
+
+
+myLevSim = function (str1, str2) {
+  innerFunc = function(str1,str2){
+    return(max(levenshteinSim(str1, str2)))
+  }
+  d = lapply(strsplit(tolower(str1),"\\s+"), innerFunc, str2 = str2 )
+  return (d)
+}
+
 
 intToStr <- function(num){
   if(num / 1000000000 >= 1)
@@ -29,13 +41,34 @@ intToStr <- function(num){
   else
     return(as.character(num))
 }
+# PREPROCESSING
+# gtd = read.csv("./gtd.csv", header = T)
+# gtd = gtd[c("iyear","imonth", "iday", "extended","country_txt", "region_txt", "provstate", "latitude", "longitude", "multiple", "success", "suicide", "attacktype1_txt", "targtype1_txt", "natlty1_txt", "gname", "guncertain1", "nperps", "nperpcap", "weaptype1_txt", "nkill", "nkillter","nwound", "property", "ishostkid", "ransom", "INT_LOG", "INT_IDEO", "INT_MISC", "scite1","scite2", "scite3")]
+# gtd$scite1 = str_replace_all(gtd$scite1, "[[:punct:]]", "")
+# gtd$scite1[gtd$scite1 == "\"\"" | gtd$scite1 == "\"" | gtd$scite1 == ""] <- NA
+# gtd  = completeFun(gtd, c("scite1", "scite2", "scite3"))
+
+#gtd$scite1 = tolower(gtd$scite1)
+#gtd$scite1 = as.character(gtd$scite1)
+#gtd$scite2 = as.character(gtd$scite2)
+#gtd$scite3 = as.character(gtd$scite3)
+
+
 
 #data = read.csv("./data.csv", header = T)
 data1  = completeFun(data[1:1000,], c("nkill", "latitude", "longitude"))
 data1$country = as.character(data1$country)
 data1$region = as.character(data1$region)
 
+
+
 shinyServer(function(input, output, session){
+  # INTRODUCTION
+  output$intro <- renderText({
+    #render("sample_rmarkdown.Rmd", output_file = "sample_rmarkdown.html")
+    readLines("index.html")
+    
+  })
   # ATTACKS BY COUNTRY
   filteredData <- reactive({
     d = data1 %>% filter(nkill >= input$nkills[1] & nkill <= input$nkills[2])
@@ -53,7 +86,6 @@ shinyServer(function(input, output, session){
       iconWidth = 20, iconHeight = 20,
       iconAnchorX = 0, iconAnchorY = 0,
       popupAnchorX = 0, popupAnchorY = 0
-      
     )
   })
   popUpCreate <- function(nkill, attack_type, date){
@@ -64,8 +96,9 @@ shinyServer(function(input, output, session){
       addMarkers(~longitude, ~latitude,
         icon = leafIcons(),
         popup = ~popUpCreate(nkill, attack_type,date),
-        clusterOptions = markerClusterOptions(),)
-    })
+        clusterOptions = markerClusterOptions()
+      )
+  })
   
   observeEvent(input$nkills, {
     leafletProxy("map") %>%
@@ -87,8 +120,6 @@ shinyServer(function(input, output, session){
                  icon = leafIcons()
       )
   })
-  
-  
   
   output$totAttacks <- renderValueBox({
     attacks <- nrow(filteredData())
@@ -138,10 +169,9 @@ shinyServer(function(input, output, session){
       layout(xaxis = list(title = ""),
              yaxis = list(title = ""))
   })
-  # INTRODUCTION
-  output$intro <- renderText({
-    #render("sample_rmarkdown.Rmd", output_file = "sample_rmarkdown.html")
-    readLines("index.html")
-    
+  # SEARCH PAGE
+  observeEvent(input$searchBtn, {
+    d = gtd %>% filter(myLevSim(scite1, tolower(trimws(input$searchBox))) > 0.8)
+    output$searchTbl <- renderDataTable(d[c("country_txt","nkill","scite1")])
   })
 })
