@@ -1,3 +1,13 @@
+library(shiny)
+library(leaflet)
+library(shinydashboard)
+library(dplyr)
+library(tidyr)
+library(plotly)
+library(RecordLinkage)
+library(stringr)
+library(shinyWidgets)
+
 # Import all the custom functions
 source("functions.R")
 

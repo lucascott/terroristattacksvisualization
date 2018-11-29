@@ -1,12 +1,3 @@
-library(shiny)
-library(leaflet)
-library(shinydashboard)
-library(dplyr)
-library(tidyr)
-library(plotly)
-library(RecordLinkage)
-library(stringr)
-library(shinyWidgets)
 
 shinyServer(function(input, output, session){
   # INTRODUCTION

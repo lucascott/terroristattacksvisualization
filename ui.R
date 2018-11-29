@@ -1,8 +1,3 @@
-library(shiny)
-library(shinydashboard)
-library(leaflet)
-library(plotly)
-library(shinyWidgets)
 
 dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green”, “red”, “yellow”
   
@@ -33,20 +28,6 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
       ),
       tabItem(tabName = "globalattack1",
         fluidPage(
-          fluidRow(
-            column(width = 12, class = "col-sm-6 col-md-3",
-              valueBoxOutput("totAttacks", width = "100%")
-            ),
-            column(width = 12, class = "col-sm-6 col-md-3",
-              valueBoxOutput("totSuccess", width = "100%")
-            ),
-            column(width = 12, class = "col-sm-6 col-md-3",
-              valueBoxOutput("totDeaths", width = "100%")
-            ),
-            column(width = 12, class = "col-sm-6 col-md-3",
-              valueBoxOutput("totRansom", width = "100%")
-            )
-          ),
           fluidRow(class = "filters",
             box(title = HTML("<b>Filters</b> <i class='fa fa-filter text-small'></i>"),  width = 12, collapsible = T,
               column(
@@ -79,7 +60,7 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
                   )
                )# end of column
               ), # end of conditional panel
-              column(width = 12, class = "col-sm-12 col-md-6 col-md-offset-6",
+              column(width = 12, class = "col-sm-12 col-md-12",
                 selectInput("selRegion",
                   h4("Filter by region:"), 
                   choices = c(All='All', as.character(regionList)), selected = 'All',
@@ -90,10 +71,22 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
           ),
           fluidRow(
             box(
-              title = "Displaying data:",
+              title = "Dashboard:",
               solidHeader = T,
               status = "primary",
               width = 12,
+              column(width = 12, class = "col-sm-6 col-md-3",
+                     valueBoxOutput("totAttacks", width = "100%")
+              ),
+              column(width = 12, class = "col-sm-6 col-md-3",
+                     valueBoxOutput("totSuccess", width = "100%")
+              ),
+              column(width = 12, class = "col-sm-6 col-md-3",
+                     valueBoxOutput("totDeaths", width = "100%")
+              ),
+              column(width = 12, class = "col-sm-6 col-md-3",
+                     valueBoxOutput("totRansom", width = "100%")
+              ),
               column(width = 12, class = "col-sm-12 col-md-6",
                 box(
                   title = "Cluster Map:", 
