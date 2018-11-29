@@ -132,7 +132,7 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
                     plotlyOutput("attType", width = "100%", height = 200)
                 )
               ),        
-              box(title = "First 10 countries per fatalities:",
+              box(title = "First 10 countries ranked by number of fatalities:",
                   collapsible = T,
                   solidHeader = F,
                   status = "info",

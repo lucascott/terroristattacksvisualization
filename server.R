@@ -8,87 +8,6 @@ library(RecordLinkage)
 library(stringr)
 library(shinyWidgets)
 
-Sys.setlocale('LC_ALL','C')
-
-# To remove the rows with null values in specific columns
-completeFun <- function(data, desiredCols) {
-  completeVec <- complete.cases(data[, desiredCols])
-  return(data[completeVec, ])
-}
-
-# To filter data by region
-selRegion <- function(data, desiredRegion){
-    return(data[which(data$region == desiredRegion),])
-}
-
-# To apply string similiarity on the search page
-myLevSim = function (str1, str2) {
-  fast = T
-  innerFunc = function(strArr,str2){
-    return(max(levenshteinSim(strArr, str2)))
-  }
-  fastInnerFunc = function(strArr,str2){
-    return(ifelse(str2 %in% strArr, 1, 0))
-  }
-  srt1Arr = strsplit(tolower(str1),"\\s+")
-  str2 = tolower(trimws(str2))
-  if(fast == T){
-    d = lapply(srt1Arr, fastInnerFunc, str2 = str2)
-  }
-  else{
-    d = lapply(srt1Arr, innerFunc, str2 = str2)
-  }
-  return (d)
-}
-
-
-intToStr <- function(num){
-  if(num / 1000000000 >= 1)
-    return(paste(as.character(round(num / 1000000000, 2)), "B")) # 1.83 B
-  else if (num / 100000000 >= 1)
-    return(paste(substr(as.character(round(num / 1000000, 0)),1,3), "M")) # 188 M
-  else if (num / 10000000 >= 1)
-    return(paste(substr(as.character(round(num / 1000000, 1)),1,4), "M")) # 17.5 M 
-  else if(num / 1000000 >= 1)
-    return(paste(as.character(round(num / 1000000, 2)), "M")) # 1.53 M
-  else if (num / 100000 >= 1)
-    return(paste(substr(as.character(round(num / 1000, 2)),1,3), "k")) # 168 k
-  else if (num / 10000 >= 1)
-    return(paste(substr(as.character(round(num / 1000, 2)),1,4), "k")) # 11.4 k
-  else if (num / 1000 >= 1)
-    return(paste(as.character(round(num / 1000, 2)), "k")) # 1.38 k
-  else
-    return(as.character(num))
-}
-# PREPROCESSING
-# gtd = read.csv("./gtd.csv", header = T)
-# gtd = gtd[c("iyear","imonth", "iday", "extended","country_txt", "region_txt", "provstate", "latitude", "longitude", "multiple", "success", "suicide", "attacktype1_txt", "targtype1_txt", "natlty1_txt", "gname", "guncertain1", "nperps", "nperpcap", "weaptype1_txt", "nkill", "nkillter","nwound", "property", "ishostkid", "ransom", "INT_LOG", "INT_IDEO", "INT_MISC", "scite1","scite2", "scite3")]
-# gtd$scite1 = str_replace_all(gtd$scite1, "[[:punct:]]", "")
-# gtd$scite1[gtd$scite1 == "\"\"" | gtd$scite1 == "\"" | gtd$scite1 == ""] <- NA
-# gtd  = completeFun(gtd, c("scite1", "scite2", "scite3"))
-gtd$country_txt = as.character(gtd$country_txt)
-# gtd$gname = as.character(gtd$gname)
-
-#gtd$scite1 = tolower(gtd$scite1)
-#gtd$scite1 = as.character(gtd$scite1)
-#gtd$scite2 = as.character(gtd$scite2)
-#gtd$scite3 = as.character(gtd$scite3)
-
-
-
-#data = read.csv("./data.csv", header = T)
-data1  = completeFun(data[1:1000,], c("nkill", "latitude", "longitude"))
-data1$country = as.character(data1$country)
-data1$region = as.character(data1$region)
-data1$group_name = data1$group_name %>% replace_na("Unknown")
-data1$group_name = as.character(data1$group_name)
-data1$attack_type = as.character(data1$attack_type)
-
-categoryList <- c("Target", "Type of attack", "Weapon")
-impactList <- c("Number of attacks", "Number of fatalities", "Number of injured", "Economic Impact")
-regionList = lapply(as.list(data1 %>% distinct(region)), as.character)[[1]]
-
-
 shinyServer(function(input, output, session){
   # INTRODUCTION
   output$intro <- renderText({
@@ -196,7 +115,7 @@ shinyServer(function(input, output, session){
     valueBox(deaths,"Total Fatalities",icon = icon("cross"), color = 'blue') })
   output$totRansom <- renderValueBox({
     ransom <- intToStr(sum(filteredData()$ransomamt, na.rm = T))
-    valueBox(ransom,"Total Ransom in $",icon = icon("hand-holding-usd"), color = 'green') })
+    valueBox(paste("$",ransom),"Total Ransom",icon = icon("hand-holding-usd"), color = 'green') })
   output$attType <- renderPlotly({
     filteredData() %>%
       group_by(attack_type) %>%
