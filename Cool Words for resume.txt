@@ -1,0 +1,35 @@
+“Visual analytics combines automated analysis techniques with
+interactive visualizations for an effective understanding, reasoning
+and decision making on the basis of very large and complex datasets
+
+Create tools and techniques to enable people to:
+• Synthesize information and derive insight from massive, dynamic,
+ambiguous, and often conflicting data.
+• Detect the expected and discover the unexpected.
+• Provide timely, defensible, and understandable assessments.
+• Communicate these assessment effectively for action
+
+effective, efficient, and the level of user acceptance
+
+• Why users intend to use a visualization tool?
+• What data users see?
+• How the visual encoding and user interactions are implemented
+from the point of view of design choices?
+
+
+#Problem characterization
+we describe specific issues of the application
+domain and end users involved, such as the problem to solve, user
+demands and datasets.
+
+#Data and task abstractions
+• We must make abstractions of the specific tasks and data
+involved in the application domain and map them to generic
+representations independent from the concrete application
+domain.
+• For tasks, we must identify the tasks required by end users in
+their workflow.
+• For example: explore, compare, resume.
+• For data, the goal will be to determine which is the data type
+that best fits user’s problem.
+• Sometimes transformation is a better solution

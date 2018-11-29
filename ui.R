@@ -33,25 +33,52 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
       tabItem(tabName = "globalattack1",
         fluidPage(
           fluidRow(
-            column(width = 12,
-              valueBoxOutput("totAttacks", width = 3),
-              valueBoxOutput("totSuccess", width = 3),
-              valueBoxOutput("totDeaths", width = 3),
-              valueBoxOutput("totRansom", width = 3)
+            column(width = 12, class = "col-sm-6 col-md-3",
+              valueBoxOutput("totAttacks", width = "100%")
+            ),
+            column(width = 12, class = "col-sm-6 col-md-3",
+              valueBoxOutput("totSuccess", width = "100%")
+            ),
+            column(width = 12, class = "col-sm-6 col-md-3",
+              valueBoxOutput("totDeaths", width = "100%")
+            ),
+            column(width = 12, class = "col-sm-6 col-md-3",
+              valueBoxOutput("totRansom", width = "100%")
             )
           ),
           fluidRow(id = "filters",
             box(title = HTML("<b>Filters</b> <i class='fa fa-filter text-small'></i>"),  width = 12, collapsible = T,
-              column(width = 6,
-                sliderInput("nkills",label = 
-                  h4("Number of kills per attack:"),
-                  min = 0,
-                  max = max(data1$nkill,na.rm = T),
-                  value = c(0,max(data1$nkill,na.rm = T)),
-                  width = "100%"
-                )
+              column(
+               width = 6,
+               radioButtons("filterType", label = h4("Attacks based on:"),
+                 choices = list("Fatalties" = 1, "Ransom" = 2), 
+                 selected = 1)
               ),
-              column(width = 6,
+              conditionalPanel(
+               condition = "input.filterType == 1",
+               column(
+                 width = 6,
+                 sliderInput("nkills",label = h4("Number of kills per attack:"),
+                    min = 0,
+                    max = max(data1$nkill,na.rm = T),
+                    value = c(0,max(data1$nkill,na.rm = T)),
+                    width = "100%"
+                  )
+               )# end of column
+              ),# end of conditional panel 
+              conditionalPanel(
+               condition = "input.filterType == 2",
+               column(
+                 width = 6,
+                 sliderInput("ransomamt",label = h4("Attack's ransom:"),
+                    min = 0,
+                    max = max(data1$ransomamt,na.rm = T),
+                    value = c(0,max(data1$ransomamt,na.rm = T)),
+                    width = "100%"
+                  )
+               )# end of column
+              ), # end of conditional panel
+              column(width = 12, class = "col-sm-12 col-md-6 col-md-offset-6",
                 selectInput("selRegion",
                   h4("Filter by region:"), 
                   choices = c(All='All', as.character(regionList)), selected = 'All',
@@ -61,32 +88,46 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
             )
           ),
           fluidRow(
-            #plotlyOutput("plot1",height='auto', width = 'auto')),
             box(
-              title = "Map of the attacks:", status = "primary",
+              title = "Displaying data:",
+              solidHeader = T,
+              status = "primary",
               width = 12,
-              collapsible = F,
-              leafletOutput("map", width = "100%")
-              
-            )
-          ),
-          fluidRow(
-            box(title = "Attacks' countries:", status = "primary",  solidHeader = TRUE,
-                width = 6,
-                collapsible = T, 
-                plotlyOutput("attCoutries", width = "100%", height = 200)
-            ),
-            box(title = "Attack types:", status = "primary",  solidHeader = TRUE,
-                width = 6,
-                collapsible = T,
-                plotlyOutput("attType", width = "100%", height = 200)
-            )
-          ),
-          fluidRow(
-            box(title = "First 10 countries per fatalities:", status = "primary",  solidHeader = TRUE,
-                width = 12,
-                collapsible = T,
-                plotlyOutput("fatCountries", width = "100%")
+              column(width = 12, class = "col-sm-12 col-md-6",
+                box(
+                  title = "Map of the attacks:", 
+                  collapsible = T,
+                  solidHeader = F,
+                  status = "info",
+                  width = "100%",
+                  leafletOutput("map", width = "100%")
+                )
+              ),
+              column(width = 12, class = "col-sm-12 col-md-6",
+                box(title = "Attacks' countries:",
+                    collapsible = T,
+                    solidHeader = F,
+                    status = "info",
+                    width = "100%",
+                    plotlyOutput("attCoutries", width = "100%", height = 200)
+                )
+              ),
+              column(width = 12, class = "col-sm-12 col-md-6",
+                box(title = "Attack types:", 
+                    collapsible = T,
+                    solidHeader = F,
+                    status = "info",
+                    width = "100%",
+                    plotlyOutput("attType", width = "100%", height = 200)
+                )
+              ),        
+              box(title = "First 10 countries per fatalities:",
+                  collapsible = T,
+                  solidHeader = F,
+                  status = "info",
+                  width = 12,
+                  plotlyOutput("fatCountries", width = "100%")
+              )
             )
           )
         )

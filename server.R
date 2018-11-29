@@ -2,6 +2,7 @@ library(shiny)
 library(leaflet)
 library(shinydashboard)
 library(dplyr)
+library(tidyr)
 library(plotly)
 library(RecordLinkage)
 library(stringr)
@@ -11,6 +12,8 @@ completeFun <- function(data, desiredCols) {
   completeVec <- complete.cases(data[, desiredCols])
   return(data[completeVec, ])
 }
+
+regionList = lapply(as.list(data1 %>% distinct(region)), as.character)[[1]]
 
 
 
@@ -47,7 +50,7 @@ intToStr <- function(num){
 # gtd$scite1 = str_replace_all(gtd$scite1, "[[:punct:]]", "")
 # gtd$scite1[gtd$scite1 == "\"\"" | gtd$scite1 == "\"" | gtd$scite1 == ""] <- NA
 # gtd  = completeFun(gtd, c("scite1", "scite2", "scite3"))
-# gtd$country_txt = as.character(gtd$country_txt)
+gtd$country_txt = as.character(gtd$country_txt)
 # gtd$gname = as.character(gtd$gname)
 
 #gtd$scite1 = tolower(gtd$scite1)
@@ -61,7 +64,9 @@ intToStr <- function(num){
 data1  = completeFun(data[1:1000,], c("nkill", "latitude", "longitude"))
 data1$country = as.character(data1$country)
 data1$region = as.character(data1$region)
-
+data1$group_name = data1$group_name %>% replace_na("Unknown")
+data1$group_name = as.character(data1$group_name)
+data1$attack_type = as.character(data1$attack_type)
 
 
 shinyServer(function(input, output, session){
@@ -72,7 +77,13 @@ shinyServer(function(input, output, session){
   })
   # ATTACKS BY COUNTRY
   filteredData <- reactive({
-    d = data1 %>% filter(nkill >= input$nkills[1] & nkill <= input$nkills[2])
+    if(input$filterType == 1){
+      d = data1 %>% filter(nkill >= input$nkills[1] & nkill <= input$nkills[2])
+    }
+    else if (input$filterType == 2){
+      d = data1 %>% filter(ransomamt >= input$ransomamt[1] & ransomamt <= input$ransomamt[2])
+    }
+    
     if(input$selRegion != "All"){
       d = d %>% filter(region == input$selRegion)
     }
@@ -89,14 +100,14 @@ shinyServer(function(input, output, session){
       popupAnchorX = 0, popupAnchorY = 0
     )
   })
-  popUpCreate <- function(nkill, attack_type, date){
-    paste("<b>Kills:</b> ",nkill,"<br/><b>Type:</b> ", attack_type,"<br/><b>Date:</b> ", date)
+  popUpCreate <- function(nkill, attack_type, date, group_name){
+    x = paste("<b>Kills:</b> ",nkill,"<br/><b>Type:</b> ", attack_type, "<br/><b>Group: </b>", group_name,"<br/><b>Date:</b> ", date)
   }
   output$map <- renderLeaflet({
     leaflet(data = filteredData()) %>% addTiles() %>%
       addMarkers(~longitude, ~latitude,
         icon = leafIcons(),
-        popup = ~popUpCreate(nkill, attack_type,date),
+        popup = ~popUpCreate(nkill, attack_type, date, group_name),
         clusterOptions = markerClusterOptions()
       )
   })
@@ -106,7 +117,7 @@ shinyServer(function(input, output, session){
     clearShapes() %>%
     clearMarkers() %>%
     addMarkers(data = filteredData(),
-                     popup = ~popUpCreate(nkill, attack_type, date),
+                     popup = ~popUpCreate(nkill, attack_type, date, group_name),
                      clusterOptions = markerClusterOptions(),
                      icon = leafIcons()
     )
@@ -116,7 +127,7 @@ shinyServer(function(input, output, session){
       clearShapes() %>%
       clearMarkers() %>%
       addMarkers(data = filteredData(),
-                 popup = ~popUpCreate(nkill, attack_type,date),
+                 popup = ~popUpCreate(nkill, attack_type,date, group_name),
                  clusterOptions = markerClusterOptions(),
                  icon = leafIcons()
       )
@@ -127,7 +138,7 @@ shinyServer(function(input, output, session){
     valueBox(attacks,"Total Attacks",icon = icon("bomb"), color = 'red') })
   output$totSuccess <- renderValueBox({
     success <- sum(filteredData()$success, na.rm = T)
-    valueBox(success,"Total Successes",icon = icon("frown"), color = 'orange') })
+    valueBox(paste(success," (",round(success/nrow(filteredData())*100, 0), "%)", sep = ""),"Total Successes",icon = icon("frown"), color = 'orange') })
   output$totDeaths <- renderValueBox({
     deaths <- sum(filteredData()$nkill, na.rm = T)
     valueBox(deaths,"Total Fatalities",icon = icon("cross"), color = 'blue') })
@@ -138,22 +149,26 @@ shinyServer(function(input, output, session){
     filteredData() %>%
       group_by(attack_type) %>%
       summarize(count = n()) %>%
+      arrange(desc(count)) %>%
+      group_by(attack_type = ifelse(row_number() > 4, "Others", attack_type)) %>%
+      summarize(count = sum(count)) %>%
       plot_ly(labels = ~attack_type, values = ~count) %>%
-      add_pie(hole = 0.6) %>%
-      layout(showlegend = F,
+      add_pie() %>%
+      layout(showlegend = T,
              xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
              yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
   })
   output$attCoutries <- renderPlotly({
-    filteredData() %>%
+    d = filteredData() %>%
       group_by(country) %>%
       summarize(count = n()) %>%
       arrange(desc(count)) %>%
       group_by(country = ifelse(row_number() > 4, "Others", country)) %>%
       summarize(count = sum(count)) %>%
+      arrange(desc(count)) %>%
       plot_ly(labels = ~country, values = ~count) %>%
-      add_pie(hole = 0.6) %>%
-      layout(showlegend = F,
+      add_pie() %>%
+      layout(showlegend = T,
              xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
              yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
   })
@@ -167,7 +182,7 @@ shinyServer(function(input, output, session){
         marker = list(color = 'rgb(158,202,225)',
                       line = list(color = 'rgb(8,48,107)',
                                   width = 1.5))) %>%
-      layout(xaxis = list(title = ""),
+      layout(xaxis = list(title = "", categoryarray = ~country),
              yaxis = list(title = ""))
   })
   # SEARCH PAGE
