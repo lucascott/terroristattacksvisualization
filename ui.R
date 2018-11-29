@@ -4,7 +4,6 @@ library(leaflet)
 library(plotly)
 library(shinyWidgets)
 
-
 dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green”, “red”, “yellow”
   
   dashboardHeader(title = "RunAway"),
@@ -13,6 +12,7 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
     sidebarMenu(id = "sbm", 
       menuItem("Introduction", tabName = "introduction", icon = icon("book")),
       menuItem("Attacks by Country", tabName = "globalattack1", icon = icon("area-chart")),
+      menuItem("Terrorism evolution", tabName = "globalattack2", icon = icon("calendar")),
       menuItem("Word Search", tabName = "wordsearch", icon = icon("search"))
     )
   ),
@@ -47,7 +47,7 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
               valueBoxOutput("totRansom", width = "100%")
             )
           ),
-          fluidRow(id = "filters",
+          fluidRow(class = "filters",
             box(title = HTML("<b>Filters</b> <i class='fa fa-filter text-small'></i>"),  width = 12, collapsible = T,
               column(
                width = 6,
@@ -96,7 +96,7 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
               width = 12,
               column(width = 12, class = "col-sm-12 col-md-6",
                 box(
-                  title = "Map of the attacks:", 
+                  title = "Cluster Map:", 
                   collapsible = T,
                   solidHeader = F,
                   status = "info",
@@ -138,6 +138,94 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
                   status = "info",
                   width = 12,
                   plotlyOutput("fatCountries", width = "100%")
+              )
+            )
+          )
+        )
+      ),
+      tabItem(tabName = "globalattack2",
+        fluidPage(
+          fluidRow(class = "filters",
+            box(title = HTML("<b>Filters</b> <i class='fa fa-filter text-small'></i>"),  width = 12, collapsible = T,
+              column(width = 6,
+                sliderInput("yearSlider",
+                  label = h4("Span of years:"),
+                  min = min(data1$iyear, na.rm = T),
+                  max = max(data1$iyear, na.rm = T),
+                  step = 1,
+                  value = c(min(data1$iyear, na.rm = T), max(data1$iyear, na.rm = T)),
+                  width = "100%"
+                )
+              ),
+              column(width = 6,
+                selectInput("selBox0", 
+                  h4("Region:"), 
+                  choices = c(All = "All", regionList), 
+                  selected = "All"
+                )
+              )
+            )
+          ),
+          fluidRow(id = "yearRegionBoxRow",
+            box(title = textOutput("title1"),
+              solidHeader = T,
+              status = "primary",
+              width = 12,
+              fluidRow(id = "mapTimeRow",
+                column(width = 12, class = "col-sm-12 col-md-6",
+                  box(title = "Cluster Map",
+                    collapsible = T,
+                    solidHeader = F,
+                    status = "info",
+                    width = 12,
+                    leafletOutput("yearMap", width = "100%")
+                  )
+                ),
+                column(width = 12, class = "col-sm-12 col-md-6",
+                  box(title = textOutput("title3"),
+                    collapsible = T,
+                    solidHeader = F,
+                    status = "info",
+                    width = 12,
+                    plotlyOutput("timePlot")
+                  )
+                )
+              ),
+              fluidRow(id = "selRow",
+                column(width = 6,
+                  selectInput("selBox1", 
+                    h4("Category"), 
+                    choices = categoryList, 
+                    selected = "Target"
+                  )
+                ),
+                column(width = 6,
+                  selectInput("selBox2", 
+                    h4("Attacks Impact"), 
+                    choices = impactList, 
+                    selected = "Number of attacks"
+                  )
+                )
+              ),
+              fluidRow(id = "pieRankRow",
+                column(width = 6,
+                  box(title = textOutput("title4"),
+                    collapsible = T,
+                    solidHeader = F,
+                    status = "info",
+                    width = 12,
+                    plotlyOutput("plotPie")
+                  )
+                ),
+                column(width = 6,
+                  box(title = textOutput("title5"),
+                    collapsible = T,
+                    solidHeader = F,
+                    status = "info",
+                    width = 12,
+                    plotlyOutput("plotBarChart")
+                  )
+                )
               )
             )
           )

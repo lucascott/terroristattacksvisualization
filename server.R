@@ -7,17 +7,21 @@ library(plotly)
 library(RecordLinkage)
 library(stringr)
 library(shinyWidgets)
+
 Sys.setlocale('LC_ALL','C')
-#to remove the rows with null values in specific columns
+
+# To remove the rows with null values in specific columns
 completeFun <- function(data, desiredCols) {
   completeVec <- complete.cases(data[, desiredCols])
   return(data[completeVec, ])
 }
 
-regionList = lapply(as.list(data1 %>% distinct(region)), as.character)[[1]]
+# To filter data by region
+selRegion <- function(data, desiredRegion){
+    return(data[which(data$region == desiredRegion),])
+}
 
-
-
+# To apply string similiarity on the search page
 myLevSim = function (str1, str2) {
   fast = T
   innerFunc = function(strArr,str2){
@@ -79,6 +83,10 @@ data1$region = as.character(data1$region)
 data1$group_name = data1$group_name %>% replace_na("Unknown")
 data1$group_name = as.character(data1$group_name)
 data1$attack_type = as.character(data1$attack_type)
+
+categoryList <- c("Target", "Type of attack", "Weapon")
+impactList <- c("Number of attacks", "Number of fatalities", "Number of injured", "Economic Impact")
+regionList = lapply(as.list(data1 %>% distinct(region)), as.character)[[1]]
 
 
 shinyServer(function(input, output, session){
@@ -228,6 +236,158 @@ shinyServer(function(input, output, session){
       layout(xaxis = list(title = ""),
              yaxis = list(title = "", categoryarray = ~country))
   })
+
+  # TIME VISUALIZATION
+
+  box1 <- reactive({switch(input$selBox1, 
+                           "Target" = "target_type" , 
+                           "Type of attack" = "attack_type",
+                           "Weapon" = "weapon_type")})
+  
+  box2 <- reactive({switch(input$selBox2, 
+                           "Number of attacks" = "nattacks", 
+                           "Number of fatalities" = "nkill",
+                           "Number of injured" = "nwound", 
+                           "Economic Impact" = "propvalue")})
+
+  output$title1 <- renderText({
+    title1 = paste(input$selBox0, " (", input$yearSlider[1], " - ", input$yearSlider[2], ")", sep = "")
+    title1
+  })
+  
+  output$title3 <- renderText({
+    title3 = paste("Time series of", input$selBox2, "vs", input$selBox1)
+    title3
+  })
+  
+  output$title4 <- renderText({
+    title4 = paste("Pie plot of number of attacks grouped by", input$selBox1)
+    title4
+  })
+  
+  output$title5 <- renderText({
+    if(input$selBox0 == "All"){
+      title5 = paste("Regions ranking by ", input$selBox2)
+      title5
+    }
+    else{
+      title5 = paste("Top 5 countries by ", input$selBox2)
+      title5
+    }
+  })
+
+  yearsFilteredData <- reactive({
+    d = data1 %>% filter(iyear >= input$yearSlider[1] & iyear <= input$yearSlider[2])
+    if(input$selBox0 != "All"){
+      d = d %>% filter(region == input$selBox0)
+    }
+    d
+  })
+  
+  timeLeafIcons <- reactive({
+    icons(
+      iconUrl = if_else(yearsFilteredData()$nkill == 0, "0.png",
+                        if_else(yearsFilteredData()$nkill < 5, "1.png",
+                                if_else(yearsFilteredData()$nkill < 10, "2.png",
+                                        if_else(yearsFilteredData()$nkill < 20, "3.png", "4.png")))),
+      iconWidth = 20, iconHeight = 20,
+      iconAnchorX = 0, iconAnchorY = 0,
+      popupAnchorX = 0, popupAnchorY = 0
+    )
+  })
+
+
+  # Map representing cluster of attacks for a selected region and date range
+  # Problem does not show cluster for all regions, and then show them when changing date range
+  output$yearMap <- renderLeaflet({
+
+    leaflet(data = yearsFilteredData()) %>% addTiles() %>%
+      addMarkers(~longitude, ~latitude,
+                 icon = timeLeafIcons(),
+                 popup = ~popUpCreate(nkill, attack_type, date, group_name),
+                 clusterOptions = markerClusterOptions()
+      )
+  })
+
+  # Time series plot, sensible to selBox0 (region), selBox1(classification of attacks-color), selBox2(attack consequences). Also sensible to date range
+  output$timePlot <- renderPlotly({
+    
+    time <- aggregate(switch(box2(),
+                            "nattacks" = ones,
+                            "nkill" = nkill,
+                            "nwound" = nwound, 
+                            "propvalue" = propvalue) ~ 
+                            iyear + switch(box1(),
+                                           "target_type" = target_type,
+                                           "attack_type" = attack_type,
+                                           "weapon_type" = weapon_type), data = yearsFilteredData(), FUN = sum)
+                            
+                            timePlot1 <- plot_ly(time) %>%
+                                          add_trace(x = ~time[,1], y = ~log(time[,3], base = exp(1)), color = ~time[,2], type = 'scatter', 
+                                                    mode = 'lines+markers',line = list(width = 2), hoverinfo = "text", 
+                                                    text = ~paste(paste("Total ", input$selBox2, ":", time[,3]), time[,2],
+                                                                  sep = "<br />"), colors = c("red","blue","green","orange")) %>%
+                                          layout(
+                                                    xaxis = list(zeroline = TRUE, title = "Year"),
+                                                    yaxis = list(side = 'left', rangemode = "tozero", overlaying = "y", 
+                                                                 title = paste("ln(", input$selBox2,")"),showgrid = TRUE, 
+                                                                 zeroline = TRUE,showticklabels = TRUE),
+                                                    legend = list(x = 0.06, y = 0.98)) %>%
+                                                    config(displayModeBar = F)
+                            timePlot1
+  })
+
+  output$plotPie <- renderPlotly({
+      pie <- aggregate(ones ~ switch(box1(),
+                              "target_type" = target_type,
+                              "attack_type" = attack_type,
+                              "weapon_type" = weapon_type), data = yearsFilteredData(), FUN = sum)
+          colnames(pie) <- c("category", "nattacks")
+          pie <- pie[order(pie$nattacks, decreasing = TRUE),]
+             
+          m <- list(l = 0, r = 0, b = 0, t = 0, pad = 0, autoexpand = TRUE)
+             
+    plotPie <- plot_ly(data = pie, labels = ~category, values = ~nattacks, type = "pie",
+                       textposition = 'inside', textinfo = 'label',
+                       insidetextfont = list(color = '#FFFFFF'), hoverinfo = 'text',
+                       text = ~paste('Numb. of attacks:', nattacks),showlegend = FALSE) %>%
+      layout(margin = m,
+             xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+             yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE)) %>%
+      config(displayModeBar = F)
+    plotPie
+    })
+  
+  # Bar chart Rank showing ranking of the regions/countries order by attack consequences
+  output$plotBarChart <- renderPlotly({
+    
+    if(input$selBox0 == "All"){
+      bar <- aggregate(switch(box2(),
+                              "nattacks" = ones,
+                              "nkill" = nkill,
+                              "nwound" = nwound, 
+                              "propvalue" = propvalue) ~ region, data = yearsFilteredData(), FUN = sum)
+      colnames(bar) <- c("region", "fatalities")
+      bar <- bar[order(bar[,2], decreasing = TRUE),]
+      
+      plotBarChart <- plot_ly(x = bar[,2], y = reorder(bar[,1], bar[,2]), type = 'bar', orientation = "h")
+      plotBarChart
+      
+    }else{
+      bar <- aggregate(switch(box2(),
+                              "nattacks" = ones,
+                              "nkill" = nkill,
+                              "nwound" = nwound, 
+                              "propvalue" = propvalue) ~ country, data = yearsFilteredData(), FUN = sum)
+      colnames(bar) <- c("country","fatalities")
+      bar <- bar[order(bar$fatalities, decreasing = TRUE),]
+      bar <- bar[1:5,]
+      
+      plotBarChart <- plot_ly(x = bar[,2], y = reorder(bar[,1], bar[,2]), type = 'bar', orientation = "h")
+      plotBarChart
+    }
+  })
+
   # SEARCH PAGE
   searchData <- reactive({
     if(input$searchBox != ""){
@@ -245,7 +405,7 @@ shinyServer(function(input, output, session){
           group_by(country_txt = ifelse(row_number() > 7, "Others", country_txt)) %>%
           summarize(count = sum(count)) %>%
           plot_ly(labels = ~country_txt, values = ~count) %>%
-          add_pie(hole = 0.6) %>%
+          add_pie() %>%
           layout(showlegend = T,
                  xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
                  yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
