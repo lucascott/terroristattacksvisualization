@@ -6,7 +6,8 @@ library(tidyr)
 library(plotly)
 library(RecordLinkage)
 library(stringr)
-
+library(shinyWidgets)
+Sys.setlocale('LC_ALL','C')
 #to remove the rows with null values in specific columns
 completeFun <- function(data, desiredCols) {
   completeVec <- complete.cases(data[, desiredCols])
@@ -18,10 +19,21 @@ regionList = lapply(as.list(data1 %>% distinct(region)), as.character)[[1]]
 
 
 myLevSim = function (str1, str2) {
-  innerFunc = function(str1,str2){
-    return(max(levenshteinSim(str1, str2)))
+  fast = T
+  innerFunc = function(strArr,str2){
+    return(max(levenshteinSim(strArr, str2)))
   }
-  d = lapply(strsplit(tolower(str1),"\\s+"), innerFunc, str2 = tolower(trimws(str2)) )
+  fastInnerFunc = function(strArr,str2){
+    return(ifelse(str2 %in% strArr, 1, 0))
+  }
+  srt1Arr = strsplit(tolower(str1),"\\s+")
+  str2 = tolower(trimws(str2))
+  if(fast == T){
+    d = lapply(srt1Arr, fastInnerFunc, str2 = str2)
+  }
+  else{
+    d = lapply(srt1Arr, innerFunc, str2 = str2)
+  }
   return (d)
 }
 
@@ -87,6 +99,14 @@ shinyServer(function(input, output, session){
     if(input$selRegion != "All"){
       d = d %>% filter(region == input$selRegion)
     }
+    if(nrow(d) == 0){
+      sendSweetAlert(
+        session = session,
+        title = "Oops!",
+        text = "The filters are too strict.",
+        type = "warning"
+      )
+    }
     d
   })
   leafIcons <- reactive({
@@ -132,7 +152,31 @@ shinyServer(function(input, output, session){
                  icon = leafIcons()
       )
   })
-  
+  output$regionMap <- renderPlotly({
+    
+    l <- list(color = toRGB("grey"), width = 0.6)
+    
+    g1 <- list(
+      showframe = FALSE,
+      showcoastlines = FALSE,
+      projection = list(type = 'Mercator'))
+    
+    m <- list(l = 0,r = 0,b = 0,t = 100, pad = 0, autoexpand = TRUE)
+    
+    p <- plot_geo(attack_freq_country) %>%
+      add_trace(
+        z = ~FREQ, color = ~FREQ, colors = 'Reds',
+        text = ~paste(paste("Country:",COUNTRY),paste("Total Attacks:",FREQ),
+                      paste("Total Fatalities:", DEATH),sep = "<br />"), locations = ~CODE,
+        marker = list(line = l), hoverinfo = "text"
+      ) %>%
+      colorbar(title = '', tickprefix = '',xanchor = "left",thickness = "20",len = 0.3,
+               tickfont = list(size = 15), nticks = 5) %>%
+      layout(
+        geo = g1, xaxis=list(fixedrange=TRUE), yaxis=list(fixedrange=TRUE), margin = m) %>%
+      config(displayModeBar = F)
+    
+    p })
   output$totAttacks <- renderValueBox({
     attacks <- nrow(filteredData())
     valueBox(attacks,"Total Attacks",icon = icon("bomb"), color = 'red') })
@@ -150,7 +194,7 @@ shinyServer(function(input, output, session){
       group_by(attack_type) %>%
       summarize(count = n()) %>%
       arrange(desc(count)) %>%
-      group_by(attack_type = ifelse(row_number() > 4, "Others", attack_type)) %>%
+      group_by(attack_type = ifelse(row_number() > 5, "Others", attack_type)) %>%
       summarize(count = sum(count)) %>%
       plot_ly(labels = ~attack_type, values = ~count) %>%
       add_pie() %>%
@@ -163,7 +207,7 @@ shinyServer(function(input, output, session){
       group_by(country) %>%
       summarize(count = n()) %>%
       arrange(desc(count)) %>%
-      group_by(country = ifelse(row_number() > 4, "Others", country)) %>%
+      group_by(country = ifelse(row_number() > 5, "Others", country)) %>%
       summarize(count = sum(count)) %>%
       arrange(desc(count)) %>%
       plot_ly(labels = ~country, values = ~count) %>%
@@ -178,46 +222,48 @@ shinyServer(function(input, output, session){
       summarize(count = sum(nkill, na.rm = T)) %>%
       arrange(desc(count)) %>%
       slice(1:10) %>%
-      plot_ly(x = ~country, y = ~count, type = 'bar',
-        marker = list(color = 'rgb(158,202,225)',
-                      line = list(color = 'rgb(8,48,107)',
-                                  width = 1.5))) %>%
-      layout(xaxis = list(title = "", categoryarray = ~country),
-             yaxis = list(title = ""))
+      arrange(count) %>%
+      plot_ly(x = ~count, y = ~country, type = 'bar', orientation = 'h',
+        marker = list(line = list(width = 1.5))) %>%
+      layout(xaxis = list(title = ""),
+             yaxis = list(title = "", categoryarray = ~country))
   })
   # SEARCH PAGE
-  output$totResults <- renderText({"This query might take few seconds..."})
   searchData <- reactive({
-    gtd %>% filter(myLevSim(scite1, input$searchBox) > 0.8)
+    if(input$searchBox != ""){
+      gtd %>% filter(myLevSim(scite1, input$searchBox) > 0.8)
+    }
   })
-  observeEvent(input$searchBtn, {
-    output$totResults <- renderText({paste("<h4>There are ",nrow(searchData())," results!</h4>")})
-    output$srcAttCoutries <- renderPlotly({
-      searchData() %>%
-        group_by(country_txt) %>%
-        summarize(count = n()) %>%
-        arrange(desc(count)) %>%
-        group_by(country_txt = ifelse(row_number() > 7, "Others", country_txt)) %>%
-        summarize(count = sum(count)) %>%
-        plot_ly(labels = ~country_txt, values = ~count) %>%
-        add_pie(hole = 0.6) %>%
-        layout(showlegend = F,
-               xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
-               yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
-    })
-    output$srcTerrOrg <- renderPlotly({
-      searchData() %>%
-        group_by(gname) %>%
-        summarize(count = n()) %>%
-        arrange(desc(count)) %>%
-        group_by(gname = ifelse(row_number() > 7, "Others", gname)) %>%
-        summarize(count = sum(count)) %>%
-        plot_ly(labels = ~gname, values = ~count) %>%
-        add_pie(hole = 0.6) %>%
-        layout(showlegend = F,
-               xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
-               yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
-    })
-    output$searchTbl <- renderDataTable(searchData()[c("country_txt","nkill","scite1")])
+  observeEvent(input$searchBox, {
+    if(input$searchBox != ""){
+      output$totResults <- renderText({paste("<h4>There are ",nrow(searchData())," matches!</h4>")})
+      output$srcAttCoutries <- renderPlotly({
+        searchData() %>%
+          group_by(country_txt) %>%
+          summarize(count = n()) %>%
+          arrange(desc(count)) %>%
+          group_by(country_txt = ifelse(row_number() > 7, "Others", country_txt)) %>%
+          summarize(count = sum(count)) %>%
+          plot_ly(labels = ~country_txt, values = ~count) %>%
+          add_pie(hole = 0.6) %>%
+          layout(showlegend = T,
+                 xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+                 yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+      })
+      output$srcTerrOrg <- renderPlotly({
+        searchData() %>%
+          group_by(gname) %>%
+          summarize(count = n()) %>%
+          arrange(desc(count)) %>%
+          group_by(gname = ifelse(row_number() > 7, "Others", gname)) %>%
+          summarize(count = sum(count)) %>%
+          arrange(count) %>%
+          plot_ly(x = ~count, y = ~gname, type = 'bar', orientation = 'h',
+                  marker = list(line = list(width = 1.5))) %>%
+          layout(xaxis = list(title = ""),
+                 yaxis = list(title = "", categoryarray = ~gname))
+      })
+      output$searchTbl <- renderDataTable(searchData()[c("country_txt","nkill","scite1")])
+    }
   })
 })

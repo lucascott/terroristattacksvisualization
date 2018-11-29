@@ -2,6 +2,7 @@ library(shiny)
 library(shinydashboard)
 library(leaflet)
 library(plotly)
+library(shinyWidgets)
 
 
 dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green”, “red”, “yellow”
@@ -10,7 +11,7 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
   
   dashboardSidebar(
     sidebarMenu(id = "sbm", 
-      menuItem("Introduction", tabName = "introduction", icon = icon("area-chart")),
+      menuItem("Introduction", tabName = "introduction", icon = icon("book")),
       menuItem("Attacks by Country", tabName = "globalattack1", icon = icon("area-chart")),
       menuItem("Word Search", tabName = "wordsearch", icon = icon("search"))
     )
@@ -103,6 +104,16 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
                   leafletOutput("map", width = "100%")
                 )
               ),
+              # column(width = 12, class = "col-sm-12 col-md-6",
+              #   box(
+              #     title = "Map of the countries:", 
+              #     collapsible = T,
+              #     solidHeader = F,
+              #     status = "info",
+              #     width = "100%",
+              #     plotlyOutput("regionMap")
+              #   )
+              # ),
               column(width = 12, class = "col-sm-12 col-md-6",
                 box(title = "Attacks' countries:",
                     collapsible = T,
@@ -136,11 +147,21 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
         fluidPage(
           fluidRow(
             box( width = 12,
-              column( width = 8,
-                textInput("searchBox", h2("Search for a word:"), placeholder = "e.g. Bomb"),
-                actionButton("searchBtn", "Search", width = "100%")
+              column( width = 12,
+                searchInput(
+                  inputId = "searchBox", 
+                  label = HTML("<h2>Search for a word: <small>(This query might take a while)</small></h2>"), 
+                  placeholder = "e.g. Bomb", 
+                  btnSearch = icon("search"), 
+                  btnReset = icon("remove"), 
+                  width = "100%"
+                )#,
+
+
+                #textInput("searchBox", h2("Search for a word:"), placeholder = "e.g. Bomb"),
+                #actionButton("searchBtn", "Search", width = "100%")
               ),
-              column( width = 4,
+              column( width = 12,
                 htmlOutput("totResults")
               )
             )
@@ -159,7 +180,7 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
           ),
           fluidRow(
             box(title = "Results' table:", width = 12,
-              collapsible = T, collapsed = T,
+              collapsible = T,
               column( width = 12,
                 dataTableOutput('searchTbl')
               )
