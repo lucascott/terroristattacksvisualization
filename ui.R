@@ -260,6 +260,13 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
             )
           ),
           fluidRow(
+            box(title = "Time based attacks:", status = "primary", 
+                width = 12, 
+                collapsible = T, 
+                plotlyOutput("yearSearch", width = "100%", height = "300px")
+            )
+          ),
+          fluidRow(
             box(title = "Results' table:", width = 12,
               collapsible = T,
               column( width = 12,

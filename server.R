@@ -232,19 +232,19 @@ shinyServer(function(input, output, session){
                                            "attack_type" = attack_type,
                                            "weapon_type" = weapon_type), data = yearsFilteredData(), FUN = sum)
                             
-                            timePlot1 <- plot_ly(time) %>%
-                                          add_trace(x = ~time[,1], y = ~log(time[,3], base = exp(1)), color = ~time[,2], type = 'scatter', 
-                                                    mode = 'lines+markers',line = list(width = 2), hoverinfo = "text", 
-                                                    text = ~paste(paste("Total ", input$selBox2, ":", time[,3]), time[,2],
-                                                                  sep = "<br />"), colors = c("red","blue","green","orange")) %>%
-                                          layout(
-                                                    xaxis = list(zeroline = TRUE, title = "Year"),
-                                                    yaxis = list(side = 'left', rangemode = "tozero", overlaying = "y", 
-                                                                 title = paste("ln(", input$selBox2,")"),showgrid = TRUE, 
-                                                                 zeroline = TRUE,showticklabels = TRUE),
-                                                    legend = list(x = 0.06, y = 0.98)) %>%
-                                                    config(displayModeBar = F)
-                            timePlot1
+    timePlot1 <- plot_ly(time) %>%
+                  add_trace(x = ~time[,1], y = ~log(time[,3], base = exp(1)), color = ~time[,2], type = 'scatter', 
+                            mode = 'lines+markers',line = list(width = 2), hoverinfo = "text", 
+                            text = ~paste(paste("Total ", input$selBox2, ":", time[,3]), time[,2],
+                                          sep = "<br />"), colors = c("red","blue","green","orange")) %>%
+                  layout(
+                            xaxis = list(zeroline = TRUE, title = "Year"),
+                            yaxis = list(side = 'left', rangemode = "tozero", overlaying = "y", 
+                                         title = paste("ln(", input$selBox2,")"),showgrid = TRUE, 
+                                         zeroline = TRUE,showticklabels = TRUE),
+                            legend = list(x = 0.06, y = 0.98)) %>%
+                            config(displayModeBar = F)
+    timePlot1
   })
 
   output$plotPie <- renderPlotly({
@@ -332,6 +332,24 @@ shinyServer(function(input, output, session){
                   marker = list(line = list(width = 1.5))) %>%
           layout(xaxis = list(title = ""),
                  yaxis = list(title = "", categoryarray = ~gname))
+      })
+      output$yearSearch <- renderPlotly({
+        searchData() %>%
+          group_by(iyear) %>% 
+          summarize(count = n(), nkill = sum(nkill)) %>% 
+          plot_ly() %>%
+          add_trace(name = "Attacks", x = ~iyear, y = ~count, type = 'scatter', 
+                    mode = 'lines+markers',line = list(width = 2)) %>% 
+          add_trace(name = "Total kills", x = ~iyear, y = ~nkill, type = 'scatter', 
+                    mode = 'lines+markers',line = list(width = 2)) %>% 
+          layout(
+            xaxis = list(zeroline = TRUE, title = "Year"),
+            yaxis = list(title = "Amount", side = 'left', rangemode = "tozero", overlaying = "y", 
+                         showgrid = TRUE, 
+                         zeroline = TRUE,showticklabels = TRUE),
+            legend = list(x = 0.06, y = 0.98)) %>%
+          config(displayModeBar = F)
+        
       })
       output$searchTbl <- renderDataTable(searchData()[c("country_txt","nkill","scite1")])
     }
