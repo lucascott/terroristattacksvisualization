@@ -301,57 +301,68 @@ shinyServer(function(input, output, session){
   # SEARCH PAGE
   searchData <- reactive({
     if(input$searchBox != ""){
-      gtd %>% filter(myLevSim(scite1, input$searchBox) > 0.8)
+       d = gtd %>% filter(myLevSim(scite1, input$searchBox) > 0.8)
+       if(nrow(d) == 0){
+         sendSweetAlert(
+           session = session,
+           title = "Oops! No results found",
+           text = "Try to search for a more general keyword...",
+           type = "warning"
+         )
+       }
+       d
     }
   })
   observeEvent(input$searchBox, {
     if(input$searchBox != ""){
       output$totResults <- renderText({paste("<h4>There are ",nrow(searchData())," matches!</h4>")})
-      output$srcAttCoutries <- renderPlotly({
-        searchData() %>%
-          group_by(country_txt) %>%
-          summarize(count = n()) %>%
-          arrange(desc(count)) %>%
-          group_by(country_txt = ifelse(row_number() > 7, "Others", country_txt)) %>%
-          summarize(count = sum(count)) %>%
-          plot_ly(labels = ~country_txt, values = ~count) %>%
-          add_pie() %>%
-          layout(showlegend = T,
-                 xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
-                 yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
-      })
-      output$srcTerrOrg <- renderPlotly({
-        searchData() %>%
-          group_by(gname) %>%
-          summarize(count = n()) %>%
-          arrange(desc(count)) %>%
-          group_by(gname = ifelse(row_number() > 7, "Others", gname)) %>%
-          summarize(count = sum(count)) %>%
-          arrange(count) %>%
-          plot_ly(x = ~count, y = ~gname, type = 'bar', orientation = 'h',
-                  marker = list(line = list(width = 1.5))) %>%
-          layout(xaxis = list(title = ""),
-                 yaxis = list(title = "", categoryarray = ~gname))
-      })
-      output$yearSearch <- renderPlotly({
-        searchData() %>%
-          group_by(iyear) %>% 
-          summarize(count = n(), nkill = sum(nkill)) %>% 
-          plot_ly() %>%
-          add_trace(name = "Attacks", x = ~iyear, y = ~count, type = 'scatter', 
-                    mode = 'lines+markers',line = list(width = 2)) %>% 
-          add_trace(name = "Total kills", x = ~iyear, y = ~nkill, type = 'scatter', 
-                    mode = 'lines+markers',line = list(width = 2)) %>% 
-          layout(
-            xaxis = list(zeroline = TRUE, title = "Year"),
-            yaxis = list(title = "Amount", side = 'left', rangemode = "tozero", overlaying = "y", 
-                         showgrid = TRUE, 
-                         zeroline = TRUE,showticklabels = TRUE),
-            legend = list(x = 0.06, y = 0.98)) %>%
-          config(displayModeBar = F)
-        
-      })
-      output$searchTbl <- renderDataTable(searchData()[c("country_txt","nkill","scite1")])
+      if (nrow(searchData()) != 0){
+        output$srcAttCoutries <- renderPlotly({
+          searchData() %>%
+            group_by(country_txt) %>%
+            summarize(count = n()) %>%
+            arrange(desc(count)) %>%
+            group_by(country_txt = ifelse(row_number() > 7, "Others", country_txt)) %>%
+            summarize(count = sum(count)) %>%
+            plot_ly(labels = ~country_txt, values = ~count) %>%
+            add_pie() %>%
+            layout(showlegend = T,
+                   xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+                   yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+        })
+        output$srcTerrOrg <- renderPlotly({
+          searchData() %>%
+            group_by(gname) %>%
+            summarize(count = n()) %>%
+            arrange(desc(count)) %>%
+            group_by(gname = ifelse(row_number() > 7, "Others", gname)) %>%
+            summarize(count = sum(count)) %>%
+            arrange(count) %>%
+            plot_ly(x = ~count, y = ~gname, type = 'bar', orientation = 'h',
+                    marker = list(line = list(width = 1.5))) %>%
+            layout(xaxis = list(title = ""),
+                   yaxis = list(title = "", categoryarray = ~gname))
+        })
+        output$yearSearch <- renderPlotly({
+          searchData() %>%
+            group_by(iyear) %>% 
+            summarize(count = n(), nkill = sum(nkill)) %>% 
+            plot_ly() %>%
+            add_trace(name = "Attacks", x = ~iyear, y = ~count, type = 'scatter', 
+                      mode = 'lines+markers',line = list(width = 2)) %>% 
+            add_trace(name = "Total kills", x = ~iyear, y = ~nkill, type = 'scatter', 
+                      mode = 'lines+markers',line = list(width = 2)) %>% 
+            layout(
+              xaxis = list(zeroline = TRUE, title = "Year"),
+              yaxis = list(title = "Amount", side = 'left', rangemode = "tozero", overlaying = "y", 
+                           showgrid = TRUE, 
+                           zeroline = TRUE,showticklabels = TRUE),
+              legend = list(x = 0.06, y = 0.98)) %>%
+            config(displayModeBar = F)
+          
+        })
+        output$searchTbl <- renderDataTable(searchData()[c("country_txt","nkill","scite1")])
+      }
     }
   })
 })
