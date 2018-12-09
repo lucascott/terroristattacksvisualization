@@ -33,17 +33,22 @@ shinyServer(function(input, output, session){
                         if_else(filteredData()$nkill < 5, "1.png",
                                 if_else(filteredData()$nkill < 10, "2.png",
                                         if_else(filteredData()$nkill < 20, "3.png", "4.png")))),
-      iconWidth = 20, iconHeight = 20,
+      iconWidth = 30, iconHeight = 30,
       iconAnchorX = 0, iconAnchorY = 0,
       popupAnchorX = 0, popupAnchorY = 0
     )
   })
+  output$ga1title <- renderText({
+    input$selRegion
+  })
+  
   popUpCreate <- function(nkill, attack_type, date, group_name){
     x = paste("<b>Kills:</b> ",nkill,"<br/><b>Type:</b> ", attack_type, "<br/><b>Group: </b>", group_name,"<br/><b>Date:</b> ", date)
   }
   output$map <- renderLeaflet({
     leaflet(data = filteredData()) %>% addTiles() %>%
       addMarkers(~longitude, ~latitude,
+        
         icon = leafIcons(),
         popup = ~popUpCreate(nkill, attack_type, date, group_name),
         clusterOptions = markerClusterOptions()

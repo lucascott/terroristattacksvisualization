@@ -71,7 +71,7 @@ dashboardPage(skin = "yellow", #“blue”, “black”, “purple”, “green�
           ),
           fluidRow(
             box(
-              title = "Dashboard:",
+              title = textOutput("ga1title"),
               solidHeader = T,
               status = "primary",
               width = 12,
